@@ -39,8 +39,21 @@ else
     ## Use Google Maps API for coordinates
     echo "Polling Google Maps API for coordinates."
 
+    ## Import Google API key
+    API_KEY=$(cat google_api_key 2> /dev/null)
+    if [[ $API_KEY == "" ]]; then
+
+        echo "Google API key not imported. Create a 'google_api_key' file with your Google API key on a single line."
+        exit 1
+
+    fi
+
+    ## Query Google Maps API for latitude/longitude of the provided ZIP code
+    API_URL="https://maps.googleapis.com/maps/api/geocode/json?address=$ZIP_CODE&key=$API_KEY"
+    API_RESPONSE=$(curl -s $API_URL)
+
     ## Get latitude and longitude by ZIP code
-    LATLNG_JSON=$(./util_get_latlng_by_zip.sh $ZIP_CODE)
+    LATLNG_JSON=$(jq -r ".results[].geometry.location" <<< $API_RESPONSE)
     LAT=$(jq -r ".lat" <<< $LATLNG_JSON)
     LNG=$(jq -r ".lng" <<< $LATLNG_JSON)
 
@@ -48,7 +61,7 @@ else
     LAT=$(printf "%0.4f\n" $LAT)
     LNG=$(printf "%0.4f\n" $LNG)
 
-    ## Cache lookup
+    ## Cache results
     echo "$ZIP_CODE,$LAT,$LNG" >> zip_cache
 
 fi
