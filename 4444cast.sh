@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Execution requires a five-digit ZIP code
+## Validate ZIP with regex
 if [[ "$1" == "" ]]; then
 
     ## Display usage if ZIP not provided
@@ -8,33 +8,46 @@ if [[ "$1" == "" ]]; then
     echo "  $0 zip_code [limit]"
     exit 1
 
+elif [[ "$1" =~ ^[0-9]{5}$ ]]; then
+
+    ZIP_CODE=$1
+
 else
 
-    ## Validate ZIP with regex
-    if [[ "$1" =~ ^[0-9]{5}$ ]]; then
-
-        ZIP_CODE=$1
-    
-    else
-
-        echo "Invalid ZIP code provided. Provide a 5-digit ZIP code."
-        exit 1
-
-    fi
+    echo "Invalid ZIP code provided. Provide a 5-digit ZIP code."
+    exit 1
 
 fi
 
 ## Support 'limit' parameter
 if [[ "$2" != "" ]]; then LIMIT=$2; fi
 
-## Get latitude and longitude by ZIP code
-LATLNG_JSON=$(./util_get_latlng_by_zip.sh $ZIP_CODE)
-LAT=$(jq -r ".lat" <<< $LATLNG_JSON)
-LNG=$(jq -r ".lng" <<< $LATLNG_JSON)
+## Check local ZIP cache
+ZIP_CACHE=$(grep $ZIP_CODE zip_cache 2> /dev/null)
 
-## Round lat/lng to 4 decimal places
-LAT=$(printf "%0.4f\n" $LAT)
-LNG=$(printf "%0.4f\n" $LNG)
+if [[ "$ZIP_CACHE" != "" ]]; then
+
+    echo "Using coordinates from local cache."
+    LAT=$(echo $ZIP_CACHE | cut -d, -f2)
+    LNG=$(echo $ZIP_CACHE | cut -d, -f3)
+
+else
+
+    echo "Polling Google Maps API for coordinates."
+
+    ## Get latitude and longitude by ZIP code
+    LATLNG_JSON=$(./util_get_latlng_by_zip.sh $ZIP_CODE)
+    LAT=$(jq -r ".lat" <<< $LATLNG_JSON)
+    LNG=$(jq -r ".lng" <<< $LATLNG_JSON)
+
+    ## Round lat/lng to 4 decimal places
+    LAT=$(printf "%0.4f\n" $LAT)
+    LNG=$(printf "%0.4f\n" $LNG)
+
+    ## Cache lookup
+    echo "$ZIP_CODE,$LAT,$LNG" >> zip_cache
+
+fi
 
 ## Query NWS API for forecast endpoint
 NWS_API="https://api.weather.gov/points/$LAT,$LNG"
