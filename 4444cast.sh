@@ -75,8 +75,7 @@ ICON_SUNNY=$'\xF0\x9F\x8C\x9E'
 if [ "$LIMIT" != "" ] && [ $PERIOD_COUNT -gt $LIMIT ]; then PERIOD_COUNT=$LIMIT; fi
 
 ## Iterate through weather forecast periods
-for (( i=1; i<=$PERIOD_COUNT; i++ ))
-do
+for (( i=1; i<=$PERIOD_COUNT; i++ )); do
 
     ## Capture current conditions
     PERIOD_NAME=$(jq -r ".[] | select(.number==$i).name" <<< $PERIODS)
