@@ -12,6 +12,8 @@ Playing around with geolocation and weather APIs. This is shite as a shareable s
   ./4444cast.sh zip_code [limit]
 ```
 
+![Demo screenshot](4444cast_screenshot.png "Demo screenshot")
+
 ## TODO:
 - [x] Add local caching of ZIP/lat/long to greatly reduce Google Maps API calls
 - [ ] Re-write in Python, for great learning.
