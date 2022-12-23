@@ -63,7 +63,7 @@ NWS_FORECAST_API_RESPONSE=$(curl -s $NWS_FORECAST_API)
 PERIODS=$(jq -r '.["properties"].periods' <<< $NWS_FORECAST_API_RESPONSE)
 PERIOD_COUNT=$(jq -r length <<< $PERIODS)
 
-## Set constants
+## Set weather icons
 DEG_SYMBOL=$'\xc2\xb0'
 ICON_CLOUDY=$'\xE2\x98\x81'
 ICON_MOSTLY_CLEAR=$'\xF0\x9F\x8C\x99'
