@@ -115,7 +115,7 @@ for (( i=1; i<=$PERIOD_COUNT; i++ )); do
             PERIOD_FC_ICON=$ICON_RAIN
             ;;
 
-        "Sunny")
+        "Sunny" | "Mostly Sunny")
             PERIOD_FC_ICON=$ICON_SUNNY
             ;;
 
