@@ -1,5 +1,5 @@
 # 4444cast
-Playing around with geolocation and weather APIs
+Playing around with geolocation and weather APIs. This is shite as a shareable script, because it requires a Google Cloud account to access the Google Maps API.
 
 ## TODO:
 - [x] Add local caching of ZIP/lat/long to greatly reduce Google Maps API calls
