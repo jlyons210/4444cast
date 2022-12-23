@@ -10,10 +10,12 @@ if [[ "$1" == "" ]]; then
 
 elif [[ "$1" =~ ^[0-9]{5}$ ]]; then
 
+    ## Use provided ZIP code
     ZIP_CODE=$1
 
 else
 
+    ## Handle bad input
     echo "Invalid ZIP code provided. Provide a 5-digit ZIP code."
     exit 1
 
@@ -61,10 +63,6 @@ NWS_FORECAST_API_RESPONSE=$(curl -s $NWS_FORECAST_API)
 PERIODS=$(jq -r '.["properties"].periods' <<< $NWS_FORECAST_API_RESPONSE)
 PERIOD_COUNT=$(jq -r length <<< $PERIODS)
 
-
-## Limit output if specified
-if [ "$LIMIT" != "" ] && [ $PERIOD_COUNT -gt $LIMIT ]; then PERIOD_COUNT=$LIMIT; fi
-
 ## Set constants
 DEG_SYMBOL=$'\xc2\xb0'
 ICON_CLOUDY=$'\xE2\x98\x81'
@@ -73,6 +71,10 @@ ICON_PARTLY_SUNNY=$'\xF0\x9F\x8C\xA4'
 ICON_RAIN=$'\xF0\x9F\x8C\xA7'
 ICON_SUNNY=$'\xF0\x9F\x8C\x9E'
 
+## Limit output if specified
+if [ "$LIMIT" != "" ] && [ $PERIOD_COUNT -gt $LIMIT ]; then PERIOD_COUNT=$LIMIT; fi
+
+## Iterate through weather forecast periods
 for (( i=1; i<=$PERIOD_COUNT; i++ ))
 do
 
