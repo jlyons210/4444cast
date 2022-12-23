@@ -25,7 +25,7 @@ fi
 if [[ "$2" != "" ]]; then LIMIT=$2; fi
 
 ## Check local ZIP cache
-ZIP_CACHE=$(grep $ZIP_CODE zip_cache 2> /dev/null)
+ZIP_CACHE=$(grep $ZIP_CODE .zip_cache 2> /dev/null)
 
 if [[ "$ZIP_CACHE" != "" ]]; then
 
@@ -40,10 +40,10 @@ else
     echo "Polling Google Maps API for coordinates."
 
     ## Import Google API key
-    API_KEY=$(cat google_api_key 2> /dev/null)
+    API_KEY=$(cat .google_api_key 2> /dev/null)
     if [[ $API_KEY == "" ]]; then
 
-        echo "Google API key not imported. Create a 'google_api_key' file with your Google API key on a single line."
+        echo "Google API key not imported. Create a '.google_api_key' file with your Google API key on a single line."
         exit 1
 
     fi
@@ -62,7 +62,7 @@ else
     LNG=$(printf "%0.4f\n" $LNG)
 
     ## Cache results
-    echo "$ZIP_CODE,$LAT,$LNG" >> zip_cache
+    echo "$ZIP_CODE,$LAT,$LNG" >> .zip_cache
 
 fi
 
