@@ -3,7 +3,7 @@ Playing around with geolocation and weather APIs. This is shite as a shareable s
 
 ## Setup:
 1. Clone repo to a location of your choosing,
-2. Create '.google_maps_api_key' in the same directory, and add Google Maps API key to the file on a single line,
+2. Create '.google_api_key' in the same directory, and add Google Maps API key to the file on a single line,
 3. Enjoy.
 
 ## TODO:
