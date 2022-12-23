@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Execution requires a five-digit ZIP code
+## Validate 'zip_code' parameter
 if [[ "$1" == "" ]]; then
 
     ## Display usage if ZIP not provided
@@ -8,19 +8,16 @@ if [[ "$1" == "" ]]; then
     echo "  $0 zip_code"
     exit 1
 
+elif [[ "$1" =~ ^[0-9]{5}$ ]]; then
+
+    ## Use provided ZIP code
+    ZIP_CODE=$1
+
 else
 
-    ## Validate ZIP with regex
-    if [[ "$1" =~ ^[0-9]{5}$ ]]; then
-
-        ZIP_CODE=$1
-    
-    else
-
-        echo "Invalid ZIP code provided. Provide a 5-digit ZIP code."
-        exit 1
-
-    fi
+    ## Handle bad input
+    echo "Invalid ZIP code provided. Provide a 5-digit ZIP code."
+    exit 1
 
 fi
 
