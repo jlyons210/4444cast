@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Validate ZIP with regex
+## Validate 'zip_code' parameter
 if [[ "$1" == "" ]]; then
 
     ## Display usage if ZIP not provided
@@ -19,7 +19,7 @@ else
 
 fi
 
-## Support 'limit' parameter
+## Check 'limit' parameter
 if [[ "$2" != "" ]]; then LIMIT=$2; fi
 
 ## Check local ZIP cache
@@ -27,12 +27,14 @@ ZIP_CACHE=$(grep $ZIP_CODE zip_cache 2> /dev/null)
 
 if [[ "$ZIP_CACHE" != "" ]]; then
 
+    ## Use locally cached coordinates
     echo "Using coordinates from local cache."
     LAT=$(echo $ZIP_CACHE | cut -d, -f2)
     LNG=$(echo $ZIP_CACHE | cut -d, -f3)
 
 else
 
+    ## Use Google Maps API for coordinates
     echo "Polling Google Maps API for coordinates."
 
     ## Get latitude and longitude by ZIP code
