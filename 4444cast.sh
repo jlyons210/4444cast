@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+## Check dependencies
+if ! ./util-check-dependency.sh curl cut jq; then exit 1; fi
+
 ## Validate 'zip_code' parameter
 if [[ "$1" == "" ]]; then
 
