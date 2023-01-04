@@ -83,6 +83,7 @@ ICON_MOSTLY_CLEAR=$'\xF0\x9F\x8C\x99'
 ICON_PARTLY_SUNNY=$'\xF0\x9F\x8C\xA4'
 ICON_RAIN=$'\xF0\x9F\x8C\xA7'
 ICON_SUNNY=$'\xF0\x9F\x8C\x9E'
+ICON_THUNDERSTORM=$'\xE2\x9B\x88'
 
 ## Limit output if specified
 if [ "$LIMIT" != "" ] && [ $PERIOD_COUNT -gt $LIMIT ]; then PERIOD_COUNT=$LIMIT; fi
@@ -117,6 +118,10 @@ for (( i=1; i<=$PERIOD_COUNT; i++ )); do
 
         "Sunny" | "Mostly Sunny")
             PERIOD_FC_ICON=$ICON_SUNNY
+            ;;
+
+	    *"Thunderstorm"*)
+	        PERIOD_FC_ICON=$ICON_THUNDERSTORM
             ;;
 
         *)
