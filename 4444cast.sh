@@ -120,8 +120,8 @@ for (( i=1; i<=$PERIOD_COUNT; i++ )); do
             PERIOD_FC_ICON=$ICON_SUNNY
             ;;
 
-	    *"Thunderstorm"*)
-	        PERIOD_FC_ICON=$ICON_THUNDERSTORM
+        *"Thunderstorm"*)
+            PERIOD_FC_ICON=$ICON_THUNDERSTORM
             ;;
 
         *)
