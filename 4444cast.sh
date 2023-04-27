@@ -7,8 +7,8 @@ if ! ./util-check-dependency.sh curl cut jq; then exit 1; fi
 if [[ "$1" == "" ]]; then
 
     ## Display usage if ZIP not provided
-    echo "Usage:"
-    echo "  $0 zip_code [limit]"
+    >&2 echo "Usage:"
+    >&2 echo "  $0 zip_code [limit]"
     exit 1
 
 elif [[ "$1" =~ ^[0-9]{5}$ ]]; then
@@ -19,7 +19,7 @@ elif [[ "$1" =~ ^[0-9]{5}$ ]]; then
 else
 
     ## Handle bad input
-    echo "Invalid ZIP code provided. Provide a 5-digit ZIP code."
+    >&2 echo "Invalid ZIP code provided. Provide a 5-digit ZIP code."
     exit 1
 
 fi
@@ -33,20 +33,20 @@ ZIP_CACHE=$(grep $ZIP_CODE .zip_cache 2> /dev/null)
 if [[ "$ZIP_CACHE" != "" ]]; then
 
     ## Use locally cached coordinates
-    echo "Using coordinates from local cache."
+    >&2 echo "Using coordinates from local cache."
     LAT=$(echo $ZIP_CACHE | cut -d, -f2)
     LNG=$(echo $ZIP_CACHE | cut -d, -f3)
 
 else
 
     ## Use Google Maps API for coordinates
-    echo "Polling Google Maps API for coordinates."
+    >&2 echo "Polling Google Maps API for coordinates."
 
     ## Import Google API key
     API_KEY=$(cat .google_api_key 2> /dev/null)
     if [[ $API_KEY == "" ]]; then
 
-        echo "Google API key not imported. Create a '.google_api_key' file with your Google API key on a single line."
+        >&2 echo "Google API key not imported. Create a '.google_api_key' file with your Google API key on a single line."
         exit 1
 
     fi
