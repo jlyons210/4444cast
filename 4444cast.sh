@@ -103,7 +103,7 @@ for (( i=1; i<=$PERIOD_COUNT; i++ )); do
     ## Set weather emojis
     case $PERIOD_FC_SHORT in
 
-        "Mostly Clear")
+        "Mostly Clear" | "Clear")
             PERIOD_FC_ICON=$ICON_MOSTLY_CLEAR
             ;;
 
@@ -119,7 +119,7 @@ for (( i=1; i<=$PERIOD_COUNT; i++ )); do
             PERIOD_FC_ICON=$ICON_RAIN
             ;;
 
-        "Sunny" | "Mostly Sunny")
+        "Sunny" | *"Mostly Sunny"*)
             PERIOD_FC_ICON=$ICON_SUNNY
             ;;
 
