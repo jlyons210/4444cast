@@ -36,7 +36,7 @@ def get_zip_coordinates(zip_code):
             for line in cache_file:
                 if zip_code in line:
                     print("Using cached coordinates.", file=sys.stderr)
-                    return line.split(",")[1], line.split(",")[2]
+                    return float(line.split(",")[1]), float(line.split(",")[2])
 
     # Get coordinates from Google Maps API
     try:
@@ -55,7 +55,7 @@ def get_zip_coordinates(zip_code):
 
     # Cache coordinates
     with open(".zip_cache", "a") as cache_file:
-        cache_file.write(f"{zip_code},{lat},{lng}")
+        cache_file.write(f"{zip_code},{lat},{lng}\n")
 
     return lat, lng
 
@@ -63,14 +63,17 @@ def get_zip_coordinates(zip_code):
 def get_forecast(lat, lng, limit):
     """ Get the weather forecast for a given location """
 
-    url = f"https://api.weather.gov/points/{lat},{lng}"
-    nws_forecast_endpoint = requests.get(url).json()['properties']['forecast']
-    nws_api_response = requests.get(nws_forecast_endpoint).json()
+    nws_location_endpoint = f"https://api.weather.gov/points/{lat},{lng}"
+    nws_location_response = requests.get(nws_location_endpoint).json()
+    location = f"{nws_location_response['properties']['relativeLocation']['properties']['city']}, {nws_location_response['properties']['relativeLocation']['properties']['state']}"
 
-    # print(f"Weather forecast for {nws_api_response['properties']['relativeLocation']['properties']['city']}, {nws_api_response['properties']['relativeLocation']['properties']['state']}")
+    nws_forecast_endpoint = nws_location_response['properties']['forecast']
+    nws_forecast_response = requests.get(nws_forecast_endpoint).json()
+
+    print(f"Weather forecast for {location}:")
     for i in range(limit):
-        weather_icon = get_weather_icon(nws_api_response['properties']['periods'][i]['shortForecast'])
-        print(f"{nws_api_response['properties']['periods'][i]['name']}: {weather_icon} {nws_api_response['properties']['periods'][i]['detailedForecast']}")
+        weather_icon = get_weather_icon(nws_forecast_response['properties']['periods'][i]['shortForecast'])
+        print(f"{nws_forecast_response['properties']['periods'][i]['name']}: {weather_icon} {nws_forecast_response['properties']['periods'][i]['detailedForecast']}")
 
 def get_weather_icon(short_forecast):
     """ Get the weather icon for a given forecast """
