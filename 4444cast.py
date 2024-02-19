@@ -73,7 +73,7 @@ def get_forecast(lat, lng, limit):
     print(f"Weather forecast for {location}:")
     for i in range(limit):
         weather_icon = get_weather_icon(nws_forecast_response['properties']['periods'][i]['shortForecast'])
-        print(f"{nws_forecast_response['properties']['periods'][i]['name']}: {weather_icon} {nws_forecast_response['properties']['periods'][i]['detailedForecast']}", file=sys.stdout)
+        print(f"{nws_forecast_response['properties']['periods'][i]['name']}: {weather_icon} {nws_forecast_response['properties']['periods'][i]['detailedForecast']}")
 
 def get_weather_icon(short_forecast):
     """ Get the weather icon for a given forecast """
