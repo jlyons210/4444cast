@@ -16,5 +16,6 @@ Playing around with geolocation and weather APIs. This is shite as a shareable s
 
 ## TODO:
 - [x] Add local caching of ZIP/lat/long to greatly reduce Google Maps API calls
-- [ ] Re-write in Python, for great learning.
+- [x] Re-write in Python, for great learning.
+  - [ ] Implement API retries
 - [ ] \(Stretch\) Re-write in Rust, for greater learning.
