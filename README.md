@@ -11,7 +11,6 @@ Playing around with geolocation and weather APIs. Markdown output is optional, a
   ./4444cast.py [-h] [--limit/-l LIMIT] [--markdown/-m] zip_code
 ```
 ## Demo:
-
 ![Console output screenshot](.4444cast_demo1.png "Console output screenshot")
 ![Markdown output screenshot](.4444cast_demo2.png "Markdown output screenshot")
 
