@@ -3,9 +3,15 @@
 
 import os
 import sys
+import argparse
 import requests
 from requests.exceptions import RequestException
 from requests.adapters import HTTPAdapter, Retry
+
+
+# Constants
+API_MAX_RETRIES = 5
+API_BACKOFF_FACTOR = 0.3
 
 
 def cache_coordinates(zip_code, lat, lng, zip_cache_filename):
@@ -15,11 +21,20 @@ def cache_coordinates(zip_code, lat, lng, zip_cache_filename):
         zip_cache.write(f"{zip_code},{lat},{lng}\n")
 
 
-def call_retriable_api(url, retries=3, backoff_factor=0.3):
+def call_retriable_api(url):
     """ Call an API with retries """
 
     session = requests.Session()
-    retry = Retry(total=retries, backoff_factor=backoff_factor)
+    retry = Retry(
+        total=API_MAX_RETRIES,
+        backoff_factor=API_BACKOFF_FACTOR,
+        status_forcelist=[
+            429,  # Too Many Requests
+            500,  # Internal Server Error
+            502,  # Bad Gateway
+            503,  # Service Unavailable
+            504,  # Gateway Timeout
+        ])
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
@@ -52,27 +67,38 @@ def get_cached_coordinates(zip_code, zip_cache_filename) -> tuple[float, float]:
 def get_command_line_args() -> tuple[str, int]:
     """ Get the command line arguments """
 
-    if len(sys.argv) == 1:
-        print_usage()
+    parser = argparse.ArgumentParser(description="Get the weather forecast for a given zip code")
 
-    zip_code = sys.argv[1] if len(sys.argv) >= 2 else None
-    limit = int(sys.argv[2]) if len(sys.argv) >= 3 else 14
+    parser.add_argument("zip_code",
+                        type=str,
+                        help="The zip code to get the weather forecast for")
 
-    return zip_code, limit
+    parser.add_argument("--limit", "-l",
+                        type=int,
+                        default=14,
+                        help="The number of periods to display. There are two periods per day.")
+
+    parser.add_argument("--markdown", "-m",
+                        action="store_true",
+                        help="Output in markdown format")
+
+    args = parser.parse_args()
+
+    if args.limit < 1:
+        print("Error: Limit must be a positive integer.", file=sys.stderr)
+        sys.exit(1)
+
+    return args.zip_code, args.limit, args.markdown
 
 
-def get_coordinates_from_maps_api(zip_code, api_key):
-    """ Get the coordinates from the Google Maps API """
+def get_coordinates_from_geo_api(zip_code):
+    """ Get the coordinates from the geocode API """
 
-    # Get coordinates from Google Maps API
-    maps_api = f"https://maps.googleapis.com/maps/api/geocode/json?address={zip_code}&key={api_key}"
-    maps_response = requests.get(maps_api, timeout=5).json()
+    geo_api = f"https://api.zippopotam.us/us/{zip_code}"
+    geo_response = call_retriable_api(geo_api)
 
-    if maps_response["status"] != "OK":
-        handle_google_api_error(maps_response)
-
-    lat = round(maps_response["results"][0]["geometry"]["location"]["lat"], 4)
-    lng = round(maps_response["results"][0]["geometry"]["location"]["lng"], 4)
+    lat = geo_response["places"][0]["latitude"]
+    lng = geo_response["places"][0]["longitude"]
 
     return lat, lng
 
@@ -90,18 +116,6 @@ def get_forecast_from_nws_api(lat, lng) -> None:
     nws_forecast_response = call_retriable_api(nws_forecast_api)
 
     return location, nws_forecast_response
-
-
-def get_google_api_key(google_api_key_filename):
-    """ Get the Google Maps API key """
-
-    try:
-        with open(google_api_key_filename, "r", encoding="utf-8") as api_key_file:
-            return api_key_file.read().strip()
-
-    except FileNotFoundError:
-        print("No Google Maps API key found.", file=sys.stderr)
-        sys.exit(1)
 
 
 def get_location(nws_location_response) -> tuple[str, str, str]:
@@ -139,7 +153,6 @@ def get_weather_icon(short_forecast) -> str:
 def get_zip_coordinates(zip_code) -> tuple[float, float]:
     """ Get the coordinates for a given zip code """
 
-    google_api_key_filename = ".google_api_key"
     zip_cache_filename = ".zip_cache"
 
     # Check local cache
@@ -147,9 +160,7 @@ def get_zip_coordinates(zip_code) -> tuple[float, float]:
     if coords:
         return coords
 
-    # Get coordinates from Google Maps API
-    api_key = get_google_api_key(google_api_key_filename)
-    lat, lng = get_coordinates_from_maps_api(zip_code, api_key)
+    lat, lng = get_coordinates_from_geo_api(zip_code)
 
     # Cache coordinates
     cache_coordinates(zip_code, lat, lng, zip_cache_filename)
@@ -157,18 +168,7 @@ def get_zip_coordinates(zip_code) -> tuple[float, float]:
     return lat, lng
 
 
-def handle_google_api_error(response_json):
-    """ Handle API errors """
-
-    print(f"Error: {response_json['status']}", file=sys.stderr)
-
-    if response_json["status"] == "REQUEST_DENIED":
-        print("Request denied. Check your API key.", file=sys.stderr)
-
-    sys.exit(1)
-
-
-def print_forecast(location, forecast, limit) -> None:
+def print_forecast(location, forecast, limit, markdown) -> None:
     """ Print the forecast for a given period """
 
     print(f"Weather forecast for {location[0]}, {location[1]} ({location[2]}):\n")
@@ -178,9 +178,15 @@ def print_forecast(location, forecast, limit) -> None:
         short_forecast = period['shortForecast']
         weather_icon = get_weather_icon(short_forecast)
 
-        print(f"**__{period['name']}:__**")
-        print(f"> {weather_icon} {short_forecast} {period['temperature']}°F")
-        print(f"> {period['detailedForecast']}\n")
+        if markdown:
+            print(f"**__{period['name']}:__**")
+            print(f"> {weather_icon} {period['temperature']}°F {short_forecast}")
+            print(f"> {period['detailedForecast']}\n")
+
+        else:
+            print(f"{period['name']}:")
+            print(f"  {weather_icon} {period['temperature']}°F {short_forecast}")
+            print(f"  {period['detailedForecast']}\n")
 
 
 def print_usage() -> None:
@@ -194,10 +200,10 @@ def print_usage() -> None:
 def main() -> None:
     """ Main function """
 
-    zip_code, limit = get_command_line_args()
+    zip_code, limit, markdown = get_command_line_args()
     lat, lng = get_zip_coordinates(zip_code)
     location, forecast = get_forecast_from_nws_api(lat, lng)
-    print_forecast(location, forecast, limit)
+    print_forecast(location, forecast, limit, markdown)
 
 
 if __name__ == "__main__":
