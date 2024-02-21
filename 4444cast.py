@@ -139,7 +139,7 @@ def get_weather_icon(short_forecast) -> str:
         "cloudy": "☁️",
         "rain": "🌧️",
         "thunder": "⛈️",
-        "snow": "❄️"
+        "snow": "❄️",
     }
 
     forecast = short_forecast.lower()
