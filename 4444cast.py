@@ -179,7 +179,7 @@ def print_forecast(location, forecast, limit) -> None:
         weather_icon = get_weather_icon(short_forecast)
 
         print(f"**__{period['name']}:__**")
-        print(f"{weather_icon} {short_forecast} {period['temperature']}°F")
+        print(f"> {weather_icon} {short_forecast} {period['temperature']}°F")
         print(f"> {period['detailedForecast']}\n")
 
 
