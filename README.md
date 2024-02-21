@@ -10,11 +10,14 @@ Playing around with geolocation and weather APIs. This is shite as a shareable s
 ```
   ./4444cast.py zip_code [limit]
 ```
+## Demo:
+:bulb: Script output is in markdown for piping into chat client webhooks. This will be configurable via command line flag later.
 
-![Demo screenshot](.4444cast_screenshot.png "Demo screenshot")
+![Demo screenshot](.4444cast_demo.png "Demo screenshot")
 
 ## TODO:
 - [x] Add local caching of ZIP/lat/long to greatly reduce Google Maps API calls
 - [x] Re-write in Python, for great learning.
   - [x] Implement API retries
+- [ ] Make markdown output optional
 - [ ] \(Stretch\) Re-write in Rust/Golang, for greater learning.
