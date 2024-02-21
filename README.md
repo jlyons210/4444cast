@@ -8,7 +8,7 @@ Playing around with geolocation and weather APIs. This is shite as a shareable s
 
 ## Usage:
 ```
-  ./4444cast.sh zip_code [limit]
+  ./4444cast.py zip_code [limit]
 ```
 
 ![Demo screenshot](.4444cast_screenshot.png "Demo screenshot")
@@ -17,4 +17,4 @@ Playing around with geolocation and weather APIs. This is shite as a shareable s
 - [x] Add local caching of ZIP/lat/long to greatly reduce Google Maps API calls
 - [x] Re-write in Python, for great learning.
   - [x] Implement API retries
-- [ ] \(Stretch\) Re-write in Rust, for greater learning.
+- [ ] \(Stretch\) Re-write in Rust/Golang, for greater learning.
