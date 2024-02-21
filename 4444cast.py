@@ -94,6 +94,7 @@ def get_command_line_args() -> tuple[str, int]:
 def get_coordinates_from_geo_api(zip_code):
     """ Get the coordinates from the geocode API """
 
+    print("Getting coordinates from geocode API.", file=sys.stderr)
     geo_api = f"https://api.zippopotam.us/us/{zip_code}"
     geo_response = call_retriable_api(geo_api)
 
