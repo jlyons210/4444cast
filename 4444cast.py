@@ -14,14 +14,14 @@ API_MAX_RETRIES = 5
 API_BACKOFF_FACTOR = 0.3
 
 
-def cache_coordinates(zip_code, lat, lng, zip_cache_filename):
+def cache_coordinates(zip_code, lat, lng, zip_cache_filename) -> None:
     """ Cache the coordinates for a given zip code """
 
     with open(zip_cache_filename, "a", encoding="utf-8") as zip_cache:
         zip_cache.write(f"{zip_code},{lat},{lng}\n")
 
 
-def call_retriable_api(url):
+def call_retriable_api(url) -> dict:
     """ Call an API with retries """
 
     session = requests.Session()
@@ -91,7 +91,7 @@ def get_command_line_args() -> tuple[str, int]:
     return args.zip_code, args.limit, args.markdown
 
 
-def get_coordinates_from_geo_api(zip_code):
+def get_coordinates_from_geo_api(zip_code) -> tuple[float, float]:
     """ Get the coordinates from the geocode API """
 
     print("Getting coordinates from geocode API.", file=sys.stderr)
