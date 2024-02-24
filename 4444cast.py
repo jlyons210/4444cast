@@ -22,7 +22,7 @@ FORECAST_SCRIPT_SYSTEM_PROMPT = (
     "each day's forecast; it does not have to be read out in full detail. Conclude your report "
     "with 'And this was Barthur, with the weather.' Throw in a lot of wordplay and "
     "colloquialisms. Do not include any scripted actions, as this will be used to create an audio "
-    "recording."
+    "recording. Say state names instead of their abbreviations, e.g. 'Texas' instead of 'TX'."
 )
 
 
