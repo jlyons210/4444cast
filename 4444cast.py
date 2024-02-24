@@ -230,8 +230,7 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
         sys.exit(1)
 
     if bool(args.openai_api_key) and not bool(args.discord_webhook_url):
-        print('Error: OpenAI API key requires a Discord webhook URL.',
-              file=sys.stderr)
+        print('Error: OpenAI API key requires a Discord webhook URL.', file=sys.stderr)
         sys.exit(1)
 
     return {
