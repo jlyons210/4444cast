@@ -208,10 +208,8 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
     parser.add_argument('--limit', '-l',
                         type=int,
                         default=14,
-                        help=(
-                            'The number of periods to display (1-20). There are two periods per '
-                            'day. Default value is 14.'
-                        ))
+                        help=('The number of periods to display (1-20). There are two periods per '
+                              'day. Default value is 14.'))
 
     parser.add_argument('--markdown', '-m',
                         action='store_true',
