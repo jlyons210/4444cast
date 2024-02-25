@@ -1,35 +1,58 @@
 #!/usr/bin/env python3
-""" Get the weather forecast for a given zip code """
+"""
+Get a weather forecast for a given zip code.
+Optionally, output the forecast to Discord with audio.
+
+Usage:
+    4444cast.py zip_code [limit] [--markdown] [--openai-api-key=API_KEY] [--discord-webhook-url=URL]
+    4444cast.py -h | --help
+
+Arguments:
+    zip_code            The zip code to get the weather forecast for
+    limit               The number of periods to display (1-20). There are two periods per day.
+                        Default value is 14.
+
+Options:
+    -h --help           Show this screen
+    --markdown          Output in markdown format
+    --openai-api-key    The OpenAI API key
+    --discord-webhook-url   The Discord webhook URL
+"""
 
 import os
 import sys
 import argparse
 import datetime
 
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 import requests
 from requests.exceptions import RequestException
 from requests.adapters import HTTPAdapter, Retry
 
 
-# Constants
+# Other Configuration
 API_MAX_RETRIES = 5
 API_BACKOFF_FACTOR = 0.3
+WEBHOOK_NAME = 'Barthur'
+TTS_VOICE = 'onyx'
+TTS_SPEED = 1.0
 FORECAST_SCRIPT_SYSTEM_PROMPT = (
     "You will be provided with a weather forecast. Summarize the weather report, "
     "conversationally, in the voice of a grumpy old man doing his very best to play a weatherman. "
     "His grammar isn't that great, and he clears his throat nervously sometimes. You can condense "
     "each day's forecast; it does not have to be read out in full detail. Conclude your report "
-    "with 'And this was Barthur, with the weather.' Throw in a lot of wordplay and "
+    f"with 'And this was {WEBHOOK_NAME}, with the weather.' Throw in a lot of wordplay and "
     "colloquialisms. Do not include any scripted actions, as this will be used to create an audio "
     "recording. Say state names instead of their abbreviations, e.g. 'Texas' instead of 'TX'."
 )
 
 
-def cache_coordinates(zip_code: str, coordinates: dict[float, float], zip_cache_filename: str) -> None:
+def cache_coordinates(zip_code: str,
+                      coordinates: dict[float, float],
+                      zip_cache_filename: str) -> None:
     """
     Cache the coordinates for a given zip code
-    
+
     Parameters:
     zip_code (str): The zip code to cache
     coordinates (dict): The coordinates to cache
@@ -43,7 +66,7 @@ def cache_coordinates(zip_code: str, coordinates: dict[float, float], zip_cache_
 def call_retriable_api(url: str) -> dict:
     """
     Call an API with retries
-    
+
     Parameters:
     url (str): The URL to call
 
@@ -89,34 +112,29 @@ def construct_output(zip_code: str, limit: int, markdown: bool) -> str:
     str: The formatted forecast text
     """
 
+    print(f'Getting forecast for {zip_code}... ', file=sys.stderr)
     forecast = get_forecast_from_weather_api(zip_code)
+
     city = forecast['location']['city']
     state = forecast['location']['state']
     radar_station = forecast['location']['radar_station']
 
-    if markdown:
-        output = f'**__Weather forecast for {city}, {state} ({radar_station}):__**\n\n'
-    else:
-        output = f'Weather forecast for {city}, {state} ({radar_station}):\n\n'
+    header2 = '## ' if markdown else ''
+    bold = '**' if markdown else ''
+    blockquote = '>' if markdown else ' '
+
+    output = f'{header2}Weather forecast for {city}, {state} ({radar_station}):\n\n'
 
     for i in range(limit):
         period = forecast['response']['properties']['periods'][i]
         short_forecast = period['shortForecast']
         weather_icon = get_weather_icon(short_forecast)
 
-        if markdown:
-            output += (
-                f"**{period['name']}:**\n"
-                f"> {weather_icon} {period['temperature']}°F {short_forecast}\n"
-                f"> {period['detailedForecast']}\n\n"
-            )
-
-        else:
-            output += (
-                f"{period['name']}:\n"
-                f"  {weather_icon} {period['temperature']}°F {short_forecast}\n"
-                f"  {period['detailedForecast']}\n\n"
-            )
+        output += (
+            f"{bold}{period['name']}:{bold}\n"
+            f"{blockquote} {weather_icon} {period['temperature']}°F {short_forecast}\n"
+            f"{blockquote} {period['detailedForecast']}\n\n"
+        )
 
     return output
 
@@ -150,7 +168,7 @@ def generate_audio_script(forecast_text: str, openai_api_key: str) -> str:
             ],
         )
 
-    except Exception as e:
+    except OpenAIError as e:
         print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
 
@@ -175,18 +193,19 @@ def generate_audio_file(forecast_audio_script: str, openai_api_key: str) -> str:
             input=forecast_audio_script,
             model='tts-1-hd',
             response_format='mp3',
-            speed=1.0,
-            voice='onyx',
+            speed=TTS_SPEED,
+            voice=TTS_VOICE,
         )
 
-    except Exception as e:
+    except OpenAIError as e:
         print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
 
     # Save to file
     today = datetime.date.today().strftime('%Y-%m-%d')
     audio_filename = f'{today} Weather Forecast.mp3'
-    response.stream_to_file(audio_filename)
+    with open(audio_filename, 'wb') as audio_file:
+        audio_file.write(response.read())
 
     return audio_filename
 
@@ -259,7 +278,7 @@ def get_coordinates(zip_code: str) -> dict[float, float]:
     coordinates = get_coordinates_from_cache(zip_code, zip_cache_filename)
     if coordinates:
         return coordinates
-    
+
     else:
         coordinates = get_coordinates_from_geo_api(zip_code, zip_cache_filename)
         return coordinates
@@ -322,10 +341,10 @@ def get_coordinates_from_geo_api(zip_code: str, zip_cache_filename: str) -> dict
 def get_forecast_from_weather_api(zip_code: str) -> dict[str, dict]:
     """
     Get the weather forecast for a given location
-    
+
     Parameters:
-    coordinates (dict): The coordinates to get the forecast for
-    
+    zip_code (str): The zip code to get the forecast for
+
     Returns:
     dict: The location and forecast data
     """
@@ -348,7 +367,7 @@ def get_forecast_from_weather_api(zip_code: str) -> dict[str, dict]:
     }
 
 
-def get_location(nws_location_response: dict) -> dict[str, str]:
+def get_location(nws_location_response: dict) -> dict[str, str, str]:
     """
     Get the location for a given response
     
@@ -403,7 +422,7 @@ def get_weather_icon(short_forecast: str) -> str:
 def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url: str) -> None:
     """
     Output the forecast to the console or send to Discord
-    
+
     Parameters:
     forecast_text (str): The forecast text to output
     openai_api_key (str): The OpenAI API key
@@ -411,7 +430,12 @@ def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url
     """
 
     if openai_api_key:
+        # Send to Discord webhook with audio
+
+        print('Generating audio script... ', file=sys.stderr)
         forecast_audio_script = generate_audio_script(forecast_text, openai_api_key)
+
+        print('Generating audio file... ', file=sys.stderr)
         audio_filename = generate_audio_file(forecast_audio_script, openai_api_key)
 
         # Send to Discord webhook
@@ -422,18 +446,20 @@ def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url
             'file': open(audio_filename, 'rb'),
         }
 
+        print('Sending to Discord webhook... ', file=sys.stderr)
         discord_response = requests.post(
             discord_webhook_url,
             data=message_payload,
             files=file_payload,
             timeout=5,
         )
-        print(f'Discord response:\n{discord_response}', file=sys.stderr)
+        print(f'Discord response: {discord_response}', file=sys.stderr)
 
         # Clean up
         os.remove(audio_filename)
 
     elif discord_webhook_url:
+        # Send to Discord webhook without audio if no OpenAI API key
         message_payload = {
             'content': forecast_text,
         }
@@ -443,9 +469,10 @@ def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url
             json=message_payload,
             timeout=5,
         )
-        print(f'Discord response:\n{discord_response}', file=sys.stderr)
+        print(f'Discord response: {discord_response}', file=sys.stderr)
 
     else:
+        # Output to console only
         print(forecast_text)
 
 
@@ -460,10 +487,14 @@ def print_usage() -> None:
 def main() -> None:
     """ Main function """
 
-    options = get_command_line_args()
-    forecast_text = construct_output(options['zip_code'], options['limit'], options['markdown'])
-    output_forecast(forecast_text, options['openai_api_key'], options['discord_webhook_url'])
+    try:
+        options = get_command_line_args()
+        forecast_text = construct_output(options['zip_code'], options['limit'], options['markdown'])
+        output_forecast(forecast_text, options['openai_api_key'], options['discord_webhook_url'])
 
+    except KeyboardInterrupt:
+        print('Error: Script execution cancelled.', file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
