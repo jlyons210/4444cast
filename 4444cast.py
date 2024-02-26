@@ -3,7 +3,7 @@
     audio.
 
 Usage:
-    4444cast.py zip_code [limit] [--markdown] [--openai-api-key=API_KEY] [--discord-webhook-url=URL]
+    4444cast.py zip_code [limit] [--markdown] [--openai-api-key=API_KEY] [--discord-webhook-urls=URLs]
     4444cast.py -h | --help
 
 Arguments:
@@ -229,9 +229,10 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
                         type=str,
                         help='The OpenAI API key')
 
-    parser.add_argument('--discord-webhook-url', '-d',
+    # A comma-separated list of webhook URLs
+    parser.add_argument('--discord-webhook-urls', '-d',
                         type=str,
-                        help='The Discord webhook URL')
+                        help='The Discord webhook URL (supports multiple, comma-separated URLs)')
 
     args = parser.parse_args()
 
@@ -239,7 +240,7 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
         print('Error: Limit must be a value between 1-20.', file=sys.stderr)
         sys.exit(1)
 
-    if bool(args.openai_api_key) and not bool(args.discord_webhook_url):
+    if bool(args.openai_api_key) and not bool(args.discord_webhook_urls):
         print('Error: OpenAI API key requires a Discord webhook URL.', file=sys.stderr)
         sys.exit(1)
 
@@ -248,7 +249,7 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
         'limit': args.limit,
         'markdown': args.markdown,
         'openai_api_key': args.openai_api_key,
-        'discord_webhook_url': args.discord_webhook_url,
+        'discord_webhook_urls': args.discord_webhook_urls.split(',') if args.discord_webhook_urls else [],
     }
 
 
@@ -271,6 +272,7 @@ def get_coordinates(zip_code: str) -> dict[float, float]:
 
     else:
         coordinates = get_coordinates_from_geo_api(zip_code, zip_cache_filename)
+        cache_coordinates(zip_code, coordinates, zip_cache_filename)
         return coordinates
 
 
@@ -321,8 +323,6 @@ def get_coordinates_from_geo_api(zip_code: str, zip_cache_filename: str) -> dict
         'lng': geo_response['places'][0]['longitude'],
     }
 
-    cache_coordinates(zip_code, coordinates, zip_cache_filename)
-
     return coordinates
 
 
@@ -342,7 +342,7 @@ def get_forecast_from_weather_api(zip_code: str) -> dict[str, dict]:
     # Get location from NWS API
     nws_location_api = f'https://api.weather.gov/points/{coordinates["lat"]},{coordinates["lng"]}'
     nws_location_response = call_retriable_api(nws_location_api)
-    location = get_location(nws_location_response)
+    location = get_nws_location_info(nws_location_response)
 
     # Get forecast from NWS API
     nws_forecast_api = nws_location_response['properties']['forecast']
@@ -354,7 +354,7 @@ def get_forecast_from_weather_api(zip_code: str) -> dict[str, dict]:
     }
 
 
-def get_location(nws_location_response: dict) -> dict[str, str, str]:
+def get_nws_location_info(nws_location_response: dict) -> dict[str, str, str]:
     """Gets the city, state, and radar_station for a provided NWS response.
     
     Args:
@@ -404,14 +404,16 @@ def get_weather_icon(short_forecast: str) -> str:
     return '❓'
 
 
-def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url: str) -> None:
+def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_urls: list[str]) -> None:
     """Output the forecast to the console or send to Discord
 
     Args:
         forecast_text (str): The forecast text to output
         openai_api_key (str): The OpenAI API key
-        discord_webhook_url (str): The Discord webhook URL
+        discord_webhook_urls (list): The Discord webhook URLs
     """
+
+    plural_webhooks = 's' if len(discord_webhook_urls) > 1 else ''
 
     if openai_api_key:
         # Generate audio script and file
@@ -421,46 +423,39 @@ def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url
         audio_filename = generate_audio_file(forecast_audio_script, openai_api_key)
 
         # Send to Discord webhook
-        print('Sending to Discord webhook... ', file=sys.stderr)
-        discord_response = requests.post(
-            discord_webhook_url,
-            data={
-                'content': forecast_text,
-            },
-            files={
-                'file': open(audio_filename, 'rb'),
-            },
-            timeout=5,
-        )
-        print(f'Discord response: {discord_response}', file=sys.stderr)
+        print(f'Sending to Discord webhook{plural_webhooks}... ', file=sys.stderr)
+        for discord_webhook_url in discord_webhook_urls:
+            discord_response = requests.post(
+                discord_webhook_url,
+                data={
+                    'content': forecast_text,
+                },
+                files={
+                    'file': open(audio_filename, 'rb'),
+                },
+                timeout=5,
+            )
+            print(f'Discord response: {discord_response}', file=sys.stderr)
 
         # Clean up
         os.remove(audio_filename)
 
-    elif discord_webhook_url:
+    elif discord_webhook_urls:
         # Send to Discord webhook without audio if no OpenAI API key
-        message_payload = {
-            'content': forecast_text,
-        }
-
-        discord_response = requests.post(
-            discord_webhook_url,
-            json=message_payload,
-            timeout=5,
-        )
-        print(f'Discord response: {discord_response}', file=sys.stderr)
+        print(f'Sending to Discord webhook{plural_webhooks}... ', file=sys.stderr)
+        for discord_webhook_url in discord_webhook_urls:
+            discord_response = requests.post(
+                discord_webhook_url,
+                data={
+                    'content': forecast_text,
+                },
+                timeout=5,
+            )
+            print(f'Discord response: {discord_response}', file=sys.stderr)
 
     else:
         # Output to console only
         print(forecast_text)
-
-
-def print_usage() -> None:
-    """Print script usage."""
-
-    print('Usage:', file=sys.stderr)
-    print(f'  {sys.argv[0]} zip_code [limit]', file=sys.stderr)
-    sys.exit(1)
 
 
 def main() -> None:
@@ -469,7 +464,7 @@ def main() -> None:
     try:
         options = get_command_line_args()
         forecast_text = construct_output(options['zip_code'], options['limit'], options['markdown'])
-        output_forecast(forecast_text, options['openai_api_key'], options['discord_webhook_url'])
+        output_forecast(forecast_text, options['openai_api_key'], options['discord_webhook_urls'])
 
     except KeyboardInterrupt:
         print('Error: Script execution cancelled.', file=sys.stderr)
