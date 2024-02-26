@@ -14,8 +14,8 @@ I wanted to retain its original functionality, so it is still possible to run as
 
 ## Usage:
 ```
-usage: ./4444cast.py [-h] [--limit LIMIT] [--markdown] [--openai-api-key OPENAI_API_KEY]
-                     [--discord-webhook-url DISCORD_WEBHOOK_URL]
+usage: ./4444cast.py [-h, --help] [-l, --limit LIMIT] [-m, --markdown] [-o, --openai-api-key OPENAI_API_KEY]
+                     [-d, --discord-webhook-urls DISCORD_WEBHOOK_URLS]
                      zip_code
 ```
 ## Demo:
