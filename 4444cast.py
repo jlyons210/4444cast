@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Get a weather forecast for a given zip code.
-Optionally, output the forecast to Discord with audio.
+"""Get a weather forecast for a given zip code. Optionally, output the forecast to Discord with
+    audio.
 
 Usage:
     4444cast.py zip_code [limit] [--markdown] [--openai-api-key=API_KEY] [--discord-webhook-url=URL]
@@ -13,9 +12,9 @@ Arguments:
                         Default value is 14.
 
 Options:
-    -h --help           Show this screen
-    --markdown          Output in markdown format
-    --openai-api-key    The OpenAI API key
+    -h --help               Show this screen
+    --markdown              Output in markdown format
+    --openai-api-key        The OpenAI API key
     --discord-webhook-url   The Discord webhook URL
 """
 
@@ -50,13 +49,12 @@ FORECAST_SCRIPT_SYSTEM_PROMPT = (
 def cache_coordinates(zip_code: str,
                       coordinates: dict[float, float],
                       zip_cache_filename: str) -> None:
-    """
-    Cache the coordinates for a given zip code
+    """Caches coordinates for a given zip code.
 
-    Parameters:
-    zip_code (str): The zip code to cache
-    coordinates (dict): The coordinates to cache
-    zip_cache_filename (str): The filename of the zip code cache
+    Args:
+        zip_code (str): The zip code to cache
+        coordinates (dict): The coordinates to cache
+        zip_cache_filename (str): The filename of the zip code cache
     """
 
     with open(zip_cache_filename, 'a', encoding='utf-8') as zip_cache:
@@ -64,14 +62,13 @@ def cache_coordinates(zip_code: str,
 
 
 def call_retriable_api(url: str) -> dict:
-    """
-    Call an API with retries
+    """Utility function for calling an API with retries.
 
-    Parameters:
-    url (str): The URL to call
+    Args:
+        url (str): The URL to call
 
     Returns:
-    dict: The JSON response from the API
+        dict: The JSON response from the API
     """
 
     session = requests.Session()
@@ -100,16 +97,15 @@ def call_retriable_api(url: str) -> dict:
 
 
 def construct_output(zip_code: str, limit: int, markdown: bool) -> str:
-    """
-    Print the forecast for a given period
+    """Builds the forecast text output.
 
-    Parameters:
-    zip_code (str): The zip code to get the forecast for
-    limit (int): The number of periods to display
-    markdown (bool): Whether to output in markdown format
+    Args:
+        zip_code (str): The zip code to get the forecast for
+        limit (int): The number of periods to display
+        markdown (bool): Whether to output in markdown format
 
     Returns:
-    str: The formatted forecast text
+        str: The formatted forecast text
     """
 
     print(f'Getting forecast for {zip_code}... ', file=sys.stderr)
@@ -140,15 +136,14 @@ def construct_output(zip_code: str, limit: int, markdown: bool) -> str:
 
 
 def generate_audio_script(forecast_text: str, openai_api_key: str) -> str:
-    """
-    Generate the audio script for the forecast
+    """Generates the text script for the forecast audio.
     
-    Parameters:
-    forecast_text (str): The forecast text to convert to audio
-    openai_api_key (str): The OpenAI API key
+    Args:
+        forecast_text (str): The forecast text to convert to audio
+        openai_api_key (str): The OpenAI API key
 
     Returns:
-    str: The audio script to use for the forecast
+        str: The audio script to use for the forecast
     """
 
     # Summarize forecast_text using gpt-3.5-turbo model
@@ -156,16 +151,14 @@ def generate_audio_script(forecast_text: str, openai_api_key: str) -> str:
         client = OpenAI(api_key=openai_api_key)
         response = client.chat.completions.create(
             model='gpt-3.5-turbo',
-            messages=[
-                {
-                    'role': 'system',
-                    'content': FORECAST_SCRIPT_SYSTEM_PROMPT,
-                },
-                {
-                    'role': 'user',
-                    'content': forecast_text,
-                },
-            ],
+            messages=[{
+                'role': 'system',
+                'content': FORECAST_SCRIPT_SYSTEM_PROMPT,
+            },
+            {
+                'role': 'user',
+                'content': forecast_text,
+            }]
         )
 
     except OpenAIError as e:
@@ -176,15 +169,14 @@ def generate_audio_script(forecast_text: str, openai_api_key: str) -> str:
 
 
 def generate_audio_file(forecast_audio_script: str, openai_api_key: str) -> str:
-    """
-    Generate the audio file for the forecast
+    """Generates the audio file for the forecast.
 
-    Parameters:
-    forecast_audio_script (str): The audio script to use for the forecast
-    openai_api_key (str): The OpenAI API key
+    Args:
+        forecast_audio_script (str): The audio script to use for the forecast
+        openai_api_key (str): The OpenAI API key
 
     Returns:
-    str: The filename of the audio file
+        str: The filename of the audio file
     """
 
     try:
@@ -211,11 +203,10 @@ def generate_audio_file(forecast_audio_script: str, openai_api_key: str) -> str:
 
 
 def get_command_line_args() -> dict[str, int, bool, str, str]:
-    """
-    Get the command line arguments
+    """Get the command line arguments.
     
     Returns:
-    dict: The command line arguments
+        dict: The command line arguments
     """
 
     parser = argparse.ArgumentParser(description='Get the weather forecast for a given zip code')
@@ -262,14 +253,13 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
 
 
 def get_coordinates(zip_code: str) -> dict[float, float]:
-    """
-    Get the coordinates for a given zip code
+    """Gets the coordinates for a given zip code from the cache or geo API.
     
-    Parameters:
-    zip_code (str): The zip code to get the coordinates for
+    Args:
+        zip_code (str): The zip code to get the coordinates for
 
     Returns:
-    dict: The coordinates for the given zip code
+        dict: The coordinates for the given zip code
     """
 
     zip_cache_filename = '.zip_cache'
@@ -285,15 +275,14 @@ def get_coordinates(zip_code: str) -> dict[float, float]:
 
 
 def get_coordinates_from_cache(zip_code: str, zip_cache_filename: str) -> dict[float, float]:
-    """
-    Get the coordinates from the local cache
+    """Gets the ZIP code coordinates from the cache.
     
-    Parameters:
-    zip_code (str): The zip code to get the coordinates for
-    zip_cache_filename (str): The filename of the zip code cache
+    Args:
+        zip_code (str): The zip code to get the coordinates for
+        zip_cache_filename (str): The filename of the zip code cache
 
     Returns:
-    dict: The coordinates for the given zip code
+        dict: The coordinates for the given zip code
     """
 
     if os.path.exists(zip_cache_filename):
@@ -313,15 +302,14 @@ def get_coordinates_from_cache(zip_code: str, zip_cache_filename: str) -> dict[f
 
 
 def get_coordinates_from_geo_api(zip_code: str, zip_cache_filename: str) -> dict[float, float]:
-    """
-    Get the coordinates from the geo API
+    """Gets the ZIP code coordinates from the geo API.
 
-    Parameters:
-    zip_code (str): The zip code to get the coordinates for
-    zip_cache_filename (str): The filename of the zip code cache
+    Args:
+        zip_code (str): The zip code to get the coordinates for
+        zip_cache_filename (str): The filename of the zip code cache
 
     Returns:
-    dict: The coordinates for the given zip code
+        dict: The coordinates for the given zip code
     """
 
     print('Getting coordinates from geo API.', file=sys.stderr)
@@ -339,14 +327,13 @@ def get_coordinates_from_geo_api(zip_code: str, zip_cache_filename: str) -> dict
 
 
 def get_forecast_from_weather_api(zip_code: str) -> dict[str, dict]:
-    """
-    Get the weather forecast for a given location
+    """Gets the weather forecast for a given location from the NWS API.
 
-    Parameters:
-    zip_code (str): The zip code to get the forecast for
+    Args:
+        zip_code (str): The zip code to get the forecast for
 
     Returns:
-    dict: The location and forecast data
+        dict: The location and forecast data
     """
 
     # Get coordinates from geo API
@@ -368,14 +355,13 @@ def get_forecast_from_weather_api(zip_code: str) -> dict[str, dict]:
 
 
 def get_location(nws_location_response: dict) -> dict[str, str, str]:
-    """
-    Get the location for a given response
+    """Gets the city, state, and radar_station for a provided NWS response.
     
-    Parameters:
-    nws_location_response (dict): The response from the NWS API
+    Args:
+        nws_location_response (dict): The response from the NWS API
 
     Returns:
-    dict: The location data
+        dict: The location data
     """
 
     location_data = nws_location_response['properties']['relativeLocation']['properties']
@@ -391,14 +377,13 @@ def get_location(nws_location_response: dict) -> dict[str, str, str]:
 
 
 def get_weather_icon(short_forecast: str) -> str:
-    """
-    Get the weather icon for a given forecast
+    """Gets the weather icon for a given short forecast.
 
-    Parameters:
-    short_forecast (str): The short forecast to get the icon for
+    Args:
+        short_forecast (str): The short forecast to get the icon for
 
     Returns:
-    str: The weather icon
+        str: The weather icon
     """
 
     icon_mapping = {
@@ -420,37 +405,31 @@ def get_weather_icon(short_forecast: str) -> str:
 
 
 def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url: str) -> None:
-    """
-    Output the forecast to the console or send to Discord
+    """Output the forecast to the console or send to Discord
 
-    Parameters:
-    forecast_text (str): The forecast text to output
-    openai_api_key (str): The OpenAI API key
-    discord_webhook_url (str): The Discord webhook URL
+    Args:
+        forecast_text (str): The forecast text to output
+        openai_api_key (str): The OpenAI API key
+        discord_webhook_url (str): The Discord webhook URL
     """
 
     if openai_api_key:
-        # Send to Discord webhook with audio
-
+        # Generate audio script and file
         print('Generating audio script... ', file=sys.stderr)
         forecast_audio_script = generate_audio_script(forecast_text, openai_api_key)
-
         print('Generating audio file... ', file=sys.stderr)
         audio_filename = generate_audio_file(forecast_audio_script, openai_api_key)
 
         # Send to Discord webhook
-        message_payload = {
-            'content': forecast_text,
-        }
-        file_payload = {
-            'file': open(audio_filename, 'rb'),
-        }
-
         print('Sending to Discord webhook... ', file=sys.stderr)
         discord_response = requests.post(
             discord_webhook_url,
-            data=message_payload,
-            files=file_payload,
+            data={
+                'content': forecast_text,
+            },
+            files={
+                'file': open(audio_filename, 'rb'),
+            },
             timeout=5,
         )
         print(f'Discord response: {discord_response}', file=sys.stderr)
@@ -477,7 +456,7 @@ def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_url
 
 
 def print_usage() -> None:
-    """ Print script usage """
+    """Print script usage."""
 
     print('Usage:', file=sys.stderr)
     print(f'  {sys.argv[0]} zip_code [limit]', file=sys.stderr)
@@ -485,7 +464,7 @@ def print_usage() -> None:
 
 
 def main() -> None:
-    """ Main function """
+    """Main function."""
 
     try:
         options = get_command_line_args()
