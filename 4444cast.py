@@ -3,7 +3,8 @@
     audio.
 
 Usage:
-    4444cast.py zip_code [limit] [--markdown] [--openai-api-key=API_KEY] [--discord-webhook-urls=URLs]
+    4444cast.py zip_code [limit] [--markdown] [--openai-api-key=API_KEY]
+                         [--discord-webhook-urls=URLs]
     4444cast.py -h | --help
 
 Arguments:
@@ -249,7 +250,8 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
         'limit': args.limit,
         'markdown': args.markdown,
         'openai_api_key': args.openai_api_key,
-        'discord_webhook_urls': args.discord_webhook_urls.split(',') if args.discord_webhook_urls else [],
+        'discord_webhook_urls':
+            args.discord_webhook_urls.split(',') if args.discord_webhook_urls else [],
     }
 
 
@@ -271,7 +273,7 @@ def get_coordinates(zip_code: str) -> dict[float, float]:
         return coordinates
 
     else:
-        coordinates = get_coordinates_from_geo_api(zip_code, zip_cache_filename)
+        coordinates = get_coordinates_from_geo_api(zip_code)
         cache_coordinates(zip_code, coordinates, zip_cache_filename)
         return coordinates
 
@@ -303,7 +305,7 @@ def get_coordinates_from_cache(zip_code: str, zip_cache_filename: str) -> dict[f
     return None
 
 
-def get_coordinates_from_geo_api(zip_code: str, zip_cache_filename: str) -> dict[float, float]:
+def get_coordinates_from_geo_api(zip_code: str) -> dict[float, float]:
     """Gets the ZIP code coordinates from the geo API.
 
     Args:
@@ -404,7 +406,9 @@ def get_weather_icon(short_forecast: str) -> str:
     return '❓'
 
 
-def output_forecast(forecast_text: str, openai_api_key: str, discord_webhook_urls: list[str]) -> None:
+def output_forecast(forecast_text: str,
+                    openai_api_key: str,
+                    discord_webhook_urls: list[str]) -> None:
     """Output the forecast to the console or send to Discord
 
     Args:
