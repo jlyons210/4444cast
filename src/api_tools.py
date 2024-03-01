@@ -15,7 +15,10 @@ class ApiTools:
     Utility functions for calling APIs.
     """
 
-    def call_with_retries(self, url: str) -> dict:
+    def call_with_retries(
+            self,
+            url: str,
+        ) -> dict:
         """
         Utility function for calling an API with retries.
 

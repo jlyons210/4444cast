@@ -13,11 +13,24 @@ class NwsWeatherForecast:
     Args:
         zip_code (str): The zip code to get the weather forecast for
 
+    Attributes:
+        zip_code (str): The zip code to get the weather forecast for
+        forecast (dict): The weather forecast
+        city (str): The city for the weather forecast
+        state (str): The state for the weather forecast
+        radar_station (str): The radar station for the weather forecast
+
     Returns:
         dict: The weather forecast
     """
 
-    def __init__(self, zip_code: str):
+    def __init__(self,
+            zip_code: str,
+        ):
+        """
+        Initializes the NwsWeatherForecast class.
+        """
+
         self.zip_code       = zip_code
         self.forecast       = self._get_forecast_from_weather_api()
         self.city           = self.forecast['location']['city']
@@ -64,7 +77,7 @@ class NwsWeatherForecast:
 
     def _get_coordinates_from_cache(
             self,
-            zip_cache_filename  : str,
+            zip_cache_filename: str,
         ) -> dict[float, float]:
         """
         Gets the ZIP code coordinates from the cache.
