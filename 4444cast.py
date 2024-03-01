@@ -23,15 +23,12 @@ import os
 import sys
 import argparse
 import datetime
+import requests
 
 from openai import OpenAI, OpenAIError
-import requests
-from requests.exceptions import RequestException
-from requests.adapters import HTTPAdapter, Retry
+from lib.nws_weather_forecast import NwsWeatherForecast
 
 # Other Configuration
-API_MAX_RETRIES         = 5
-API_BACKOFF_FACTOR      = 0.3
 WEBHOOK_NAME            = 'Barthur'
 TTS_VOICE               = 'onyx'
 TTS_SPEED               = 1.0
@@ -44,62 +41,6 @@ FORECAST_SCRIPT_SYSTEM_PROMPT = (
     "colloquialisms. Do not include any scripted actions, as this will be used to create an audio "
     "recording. Say state names instead of their abbreviations, e.g. 'Texas' instead of 'TX'."
 )
-
-
-def cache_coordinates(
-        zip_code            : str,
-        coordinates         : dict[float, float],
-        zip_cache_filename  : str,
-    ) -> None:
-    """
-    Caches coordinates for a given zip code.
-
-    Args:
-        zip_code (str): The zip code to cache
-        coordinates (dict): The coordinates to cache
-        zip_cache_filename (str): The filename of the zip code cache
-    """
-
-    with open(zip_cache_filename, 'a', encoding='utf-8') as zip_cache:
-        zip_cache.write(f'{zip_code},{coordinates["lat"]},{coordinates["lng"]}\n')
-
-
-def call_retriable_api(url: str) -> dict:
-    """
-    Utility function for calling an API with retries.
-
-    Args:
-        url (str): The URL to call
-
-    Returns:
-        dict: The JSON response from the API
-    """
-
-    session = requests.Session()
-    retry = Retry(
-        total               = API_MAX_RETRIES,
-        backoff_factor      = API_BACKOFF_FACTOR,
-        status_forcelist    = [
-            429,  # Too Many Requests
-            500,  # Internal Server Error
-            502,  # Bad Gateway
-            503,  # Service Unavailable
-            504,  # Gateway Timeout
-        ]
-    )
-
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-
-    try:
-        response = session.get(url, timeout=5)
-        response.raise_for_status()
-        return response.json()
-
-    except RequestException as e:
-        print(f'Error: {e}', file=sys.stderr)
-        sys.exit(1)
 
 
 def construct_output(
@@ -120,18 +61,17 @@ def construct_output(
     """
 
     print(f'Getting forecast for {zip_code}... ', file=sys.stderr)
-    forecast = get_forecast_from_weather_api(zip_code)
-
-    city            = forecast['location']['city']
-    state           = forecast['location']['state']
-    radar_station   = forecast['location']['radar_station']
+    nws_payload     = NwsWeatherForecast(zip_code)
+    city            = nws_payload.city
+    state           = nws_payload.state
+    radar_station   = nws_payload.radar_station
     header2         = '## ' if use_markdown else ''
     bold            = '**' if use_markdown else ''
     blockquote      = '>' if use_markdown else ' '
 
     output = f'{header2}Weather forecast for {city}, {state} ({radar_station}):\n\n'
     for i in range(limit):
-        period          = forecast['response']['properties']['periods'][i]
+        period          = nws_payload.forecast['response']['properties']['periods'][i]
         short_forecast  = period['shortForecast']
         weather_icon    = get_weather_icon(short_forecast)
 
@@ -284,138 +224,6 @@ def get_command_line_args() -> dict[str, int, bool, str, str]:
         'openai_api_key'        : args.openai_api_key,
         'discord_webhook_urls'  :
             args.discord_webhook_urls.split(',') if args.discord_webhook_urls else [],
-    }
-
-
-def get_coordinates(zip_code: str) -> dict[float, float]:
-    """
-    Gets the coordinates for a given zip code from the cache or geo API.
-    
-    Args:
-        zip_code (str): The zip code to get the coordinates for
-
-    Returns:
-        dict: The coordinates for the given zip code
-    """
-
-    zip_cache_filename = '.zip_cache'
-
-    # Check local cache
-    coordinates = get_coordinates_from_cache(zip_code, zip_cache_filename)
-    if coordinates:
-        return coordinates
-
-    else:
-        coordinates = get_coordinates_from_geo_api(zip_code)
-        cache_coordinates(zip_code, coordinates, zip_cache_filename)
-        return coordinates
-
-
-def get_coordinates_from_cache(
-        zip_code            : str,
-        zip_cache_filename  : str,
-    ) -> dict[float, float]:
-    """
-    Gets the ZIP code coordinates from the cache.
-    
-    Args:
-        zip_code (str): The zip code to get the coordinates for
-        zip_cache_filename (str): The filename of the zip code cache
-
-    Returns:
-        dict: The coordinates for the given zip code
-    """
-
-    if os.path.exists(zip_cache_filename):
-        with open(zip_cache_filename, 'r', encoding='utf-8') as zip_cache:
-            for line in zip_cache:
-                if zip_code in line:
-                    print('Using cached coordinates.', file=sys.stderr)
-                    coordinates = line.split(',')
-
-                    return {
-                        'lat': float(coordinates[1]),
-                        'lng': float(coordinates[2]),
-                    }
-
-    # Coordinates not cached
-    return None
-
-
-def get_coordinates_from_geo_api(zip_code: str) -> dict[float, float]:
-    """
-    Gets the ZIP code coordinates from the geo API.
-
-    Args:
-        zip_code (str): The zip code to get the coordinates for
-
-    Returns:
-        dict: The coordinates for the given zip code
-    """
-
-    print('Getting coordinates from geo API.', file=sys.stderr)
-    geo_api         = f'https://api.zippopotam.us/us/{zip_code}'
-    geo_response    = call_retriable_api(geo_api)
-
-    coordinates = {
-        'lat': geo_response['places'][0]['latitude'],
-        'lng': geo_response['places'][0]['longitude'],
-    }
-
-    return coordinates
-
-
-def get_forecast_from_weather_api(zip_code: str) -> dict[str, dict]:
-    """
-    Gets the weather forecast for a given location from the NWS API.
-
-    Args:
-        zip_code (str): The zip code to get the forecast for
-
-    Returns:
-        dict: The location and forecast data
-    """
-
-    # Get coordinates from geo API
-    coordinates             = get_coordinates(zip_code)
-    lat                     = coordinates['lat']
-    lng                     = coordinates['lng']
-
-    # Get location from NWS API
-    nws_location_api        = f'https://api.weather.gov/points/{lat},{lng}'
-    nws_location_response   = call_retriable_api(nws_location_api)
-    location                = get_nws_location_info(nws_location_response)
-
-    # Get forecast from NWS API
-    nws_forecast_api        = nws_location_response['properties']['forecast']
-    nws_forecast_response   = call_retriable_api(nws_forecast_api)
-
-    return {
-        'location': location,
-        'response': nws_forecast_response,
-    }
-
-
-def get_nws_location_info(nws_location_response: dict) -> dict[str, str, str]:
-    """
-    Gets the city, state, and radar_station for a provided NWS response.
-    
-    Args:
-        nws_location_response (dict): The response from the NWS API
-
-    Returns:
-        dict: The location data
-    """
-
-    location_data   = nws_location_response['properties']['relativeLocation']['properties']
-    city            = location_data['city']
-    state           = location_data['state']
-    radar_station   = nws_location_response['properties']['radarStation']
-
-    return {
-        'city'          : city,
-        'state'         : state,
-        'radar_station' : radar_station,
     }
 
 
