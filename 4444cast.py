@@ -84,6 +84,44 @@ def construct_output(
     return output
 
 
+def generate_audio_file(
+        forecast_audio_script   : str,
+        openai_api_key          : str,
+    ) -> str:
+    """
+    Generates the audio file for the forecast.
+
+    Args:
+        forecast_audio_script (str): The audio script to use for the forecast
+        openai_api_key (str): The OpenAI API key
+
+    Returns:
+        str: The filename of the audio file
+    """
+
+    try:
+        client = OpenAI(api_key=openai_api_key)
+        response = client.audio.speech.create(
+            input           = forecast_audio_script,
+            model           = 'tts-1-hd',
+            response_format = 'mp3',
+            speed           = TTS_SPEED,
+            voice           = TTS_VOICE,
+        )
+
+    except OpenAIError as e:
+        print(f'Error: {e}', file=sys.stderr)
+        sys.exit(1)
+
+    today           = datetime.date.today().strftime('%Y-%m-%d')
+    audio_filename  = f'{today} Weather Forecast.mp3'
+
+    with open(audio_filename, 'wb') as audio_file:
+        audio_file.write(response.read())
+
+    return audio_filename
+
+
 def generate_audio_script(
         forecast_text   : str,
         openai_api_key  : str,
@@ -121,44 +159,6 @@ def generate_audio_script(
         sys.exit(1)
 
     return response.choices[0].message.content
-
-
-def generate_audio_file(
-        forecast_audio_script   : str,
-        openai_api_key          : str,
-    ) -> str:
-    """
-    Generates the audio file for the forecast.
-
-    Args:
-        forecast_audio_script (str): The audio script to use for the forecast
-        openai_api_key (str): The OpenAI API key
-
-    Returns:
-        str: The filename of the audio file
-    """
-
-    try:
-        client = OpenAI(api_key=openai_api_key)
-        response = client.audio.speech.create(
-            input           = forecast_audio_script,
-            model           = 'tts-1-hd',
-            response_format = 'mp3',
-            speed           = TTS_SPEED,
-            voice           = TTS_VOICE,
-        )
-
-    except OpenAIError as e:
-        print(f'Error: {e}', file=sys.stderr)
-        sys.exit(1)
-
-    today           = datetime.date.today().strftime('%Y-%m-%d')
-    audio_filename  = f'{today} Weather Forecast.mp3'
-
-    with open(audio_filename, 'wb') as audio_file:
-        audio_file.write(response.read())
-
-    return audio_filename
 
 
 def get_command_line_args() -> dict[str, int, bool, str, str]:
