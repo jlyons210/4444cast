@@ -26,7 +26,7 @@ import datetime
 import requests
 
 from openai import OpenAI, OpenAIError
-from lib.nws_weather_forecast import NwsWeatherForecast
+from src.nws_weather_forecast import NwsWeatherForecast
 
 # Other Configuration
 WEBHOOK_NAME            = 'Barthur'
