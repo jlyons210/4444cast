@@ -7,6 +7,8 @@ The [original version](https://github.com/jlyons210/4444cast/tree/579146f38fe8db
 
 I wanted to retain its original functionality, so it is still possible to run as a standalone CLI program. Discord and OpenAI functions are optional. Optional markdown output prettifies Discord channel output.
 
+Check it out on my [Discord server](https://discord.gg/bH6x6Jbv39)!
+
 ## Setup:
 1. Clone repo to a location of your choosing,
 2. `pip3 install -r requirements.txt`
