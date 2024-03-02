@@ -279,7 +279,9 @@ def output_forecast(
 
         print('Generating audio file... ', file=sys.stderr)
         audio_filename          = generate_audio_file(forecast_audio_script, openai_api_key)
-        audio_payload           = { 'file': open(audio_filename, 'rb') }
+        with open(audio_filename, 'rb') as audio_file:
+            audio_content       = audio_file.read()
+            audio_payload       = { 'file': (audio_filename, audio_content, 'audio/mp3') }
 
         print(f'Sending to Discord webhook{plural_webhooks}... ', file=sys.stderr)
         for discord_webhook_url in discord_webhook_urls:
