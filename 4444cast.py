@@ -259,7 +259,7 @@ def get_weather_icon(short_forecast: str) -> str:
 def output_forecast(
         forecast_text           : str,
         openai_api_key          : str,
-        discord_webhook_urls    : list[str]
+        discord_webhook_urls    : list[str],
     ) -> None:
     """
     Output the forecast to the console or send to Discord
