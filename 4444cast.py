@@ -276,6 +276,7 @@ def output_forecast(
     if openai_api_key:
         print('Generating audio script... ', file=sys.stderr)
         forecast_audio_script   = generate_audio_script(forecast_text, openai_api_key)
+        print(f'Audio script: {forecast_audio_script}', file=sys.stderr)
 
         print('Generating audio file... ', file=sys.stderr)
         audio_filename          = generate_audio_file(forecast_audio_script, openai_api_key)
