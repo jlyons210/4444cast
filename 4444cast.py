@@ -39,7 +39,9 @@ FORECAST_SCRIPT_SYSTEM_PROMPT = (
     "each day's forecast; it does not have to be read out in full detail. Conclude your report "
     f"with 'And this was {WEBHOOK_NAME}, with the weather.' Throw in a lot of wordplay and "
     "colloquialisms. Do not include any scripted actions, as this will be used to create an audio "
-    "recording. Say state names instead of their abbreviations, e.g. 'Texas' instead of 'TX'."
+    "recording. Say state names instead of their abbreviations, e.g. 'Texas' instead of 'TX'. "
+    "Convert the '°' symbol to the word 'degrees', and F and C abbreviations to the words "
+    "'fahrenheit' and 'celsius'."
 )
 
 
