@@ -160,8 +160,12 @@ def generate_audio_script(
         print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
 
-    return response.choices[0].message.content
+    audio_script = response.choices[0].message.content
 
+    # DEBUG - looking for why odd units "ferras" are spoken
+    print(f'audio script: {audio_script}', file=sys.stderr)
+
+    return audio_script
 
 def get_command_line_args() -> dict[str, int, bool, str, str]:
     """
