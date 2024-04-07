@@ -249,6 +249,7 @@ def get_weather_icon(short_forecast: str) -> str:
         'clear':    '🌙',
         'cloudy':   '☁️',
         'rain':     '🌧️',
+        'drizzle':  '🌧️',
         'thunder':  '⛈️',
         't-storm':  '⛈️',
         'snow':     '❄️',
