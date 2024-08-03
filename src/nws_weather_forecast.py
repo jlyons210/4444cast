@@ -123,8 +123,8 @@ class NwsWeatherForecast:
         geo_response    = ApiTools.call_with_retries(self, geo_api)
 
         coordinates = {
-            'lat': geo_response['places'][0]['latitude'],
-            'lng': geo_response['places'][0]['longitude'],
+            'lat'       : geo_response['places'][0]['latitude'],
+            'lng'       : geo_response['places'][0]['longitude'],
         }
 
         return coordinates
@@ -169,13 +169,13 @@ class NwsWeatherForecast:
             dict: The location data
         """
 
-        location_data   = nws_location_response['properties']['relativeLocation']['properties']
-        city            = location_data['city']
-        state           = location_data['state']
-        radar_station   = nws_location_response['properties']['radarStation']
+        location_data           = nws_location_response['properties']['relativeLocation']
+        city                    = location_data['properties']['city']
+        state                   = location_data['properties']['state']
+        radar_station           = nws_location_response['properties']['radarStation']
 
         return {
-            'city'          : city,
-            'state'         : state,
-            'radar_station' : radar_station,
+            'city'              : city,
+            'state'             : state,
+            'radar_station'     : radar_station,
         }
